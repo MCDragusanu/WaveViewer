@@ -1,13 +1,61 @@
-package com.example.waveviewer.audio_stream.pcm
+import com.example.waveviewer.audio_stream.pcm.PCMError
+import com.example.waveviewer.audio_stream.pcm.PCMFrame
+import com.example.waveviewer.audio_stream.pcm.PCMInputStream
+import com.example.waveviewer.audio_stream.pcm.PCMSample
+import com.example.waveviewer.audio_stream.wav.WavMonoFrame
 
-sealed class PCMIterator (val value : Long , val step : Int) {
+sealed class PCMIterator<T>(
+    protected var value: T,
+    protected var currentIndex: Int,
+    protected val size: Int
+) :
+    Iterator<T> {
 
-    class ByteIterator(byteOffset : Long) : PCMIterator(byteOffset , 1)
-    class MillisecondIterator(msOffset : Long, stepInBytes : Int) : PCMIterator(msOffset , stepInBytes)
-    class FrameIterator(frameOffset : Long, stepInBytes : Int)  : PCMIterator(frameOffset, stepInBytes)
-    class SampleIterator(sampleOffset : Long, stepInBytes : Int) : PCMIterator(sampleOffset , stepInBytes)
+    class PCMFrameIterator(
+        private val stream: PCMInputStream,
+        frame: PCMFrame,
+        currentIndex: Int,
+        endIndex: Int
+    ) : PCMIterator<PCMFrame>(frame, currentIndex, endIndex) {
 
-    data object Begin : PCMIterator(0 , 0)
-    data object End : PCMIterator(-1 , -1)
-    data object Invalid : PCMIterator(-1 , 0)
+        override fun hasNext(): Boolean {
+            return currentIndex < size
+        }
+
+        override fun next(): PCMFrame {
+            if (!hasNext()) {
+                stream.close()
+                throw NoSuchElementException("No more frames available")
+            }
+
+            val frame = stream.readNextFrame(stream.getDescriptor().getSampleRate()) ?: WavMonoFrame(stream.getDescriptor() , rawBytes = ByteArray(0))
+               // ?: throw NoSuchElementException("Unexpected end of stream")
+
+            value = frame
+            currentIndex++
+
+            if (!hasNext()) {
+                stream.close()
+            }
+
+            return frame
+        }
+    }
+
+    class PCMSampleIterator(
+        private val frame: PCMFrame,
+        sample: PCMSample,
+        currentIndex: Int,
+        endIndex: Int
+    ) : PCMIterator<PCMSample>(sample, currentIndex, endIndex) {
+        override fun hasNext(): Boolean {
+            return currentIndex * frame.getSampleByteStride() < frame.getBytes().size
+        }
+
+        override fun next(): PCMSample {
+            val sample = frame.get(currentIndex)
+            currentIndex++
+            return sample
+        }
+    }
 }

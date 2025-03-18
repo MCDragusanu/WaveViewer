@@ -1,123 +1,93 @@
 package com.example.waveviewer.audio_stream.wav
 
+import PCMIterator
 import android.util.Log
 import com.example.waveviewer.audio_stream.pcm.PCMError
 import com.example.waveviewer.audio_stream.pcm.PCMHeader
 import com.example.waveviewer.audio_stream.pcm.PCMFrame
 import com.example.waveviewer.audio_stream.pcm.PCMInputStream
-import com.example.waveviewer.audio_stream.pcm.PCMIterator
 import java.io.File
 import java.io.RandomAccessFile
+import java.nio.ByteBuffer
+import kotlin.math.min
 
-class WavInputStream(private val file: File) : PCMInputStream() {
-    private var bytesRead = 0
-    private lateinit var pcmHeader: WavHeader
-    private var pcmIterator: PCMIterator = PCMIterator.Invalid
+class WavInputStream(private val file: File, private val samplesPerFrame : Int = 44100) : PCMInputStream() {
+
+    private val pcmHeader: WavHeader
+    private var byteOffset = 0
     private var fileStream: RandomAccessFile? = null
-
+    private var frameCount : Int
+    private var currentFrameIndex : Int = 0
     init {
-       file.inputStream().use { stream->
-           val headerBuff = ByteArray(44)
-           stream.read(headerBuff)
-           pcmHeader = WavHeader(headerBuff)
-           if(pcmHeader.isValid()){
-               pcmIterator = PCMIterator.Begin
-           }else {
-               pcmIterator = PCMIterator.Invalid
-               throw  PCMError.InvalidHeader("WAV Header is invalid!")
-           }
-       }
+        val headerBuff = ByteArray(44)
+        file.inputStream().use {
+            it.read(headerBuff)
+            frameCount = it.available() / samplesPerFrame
+        }
+        pcmHeader = WavHeader(headerBuff)
+
     }
 
     override fun open() {
-        if (!file.exists() || !file.isFile || !file.canRead()) {
-            pcmIterator = PCMIterator.Invalid
+        if (!file.exists() || !file.isFile || !file.canRead() ) {
             throw PCMError.FileStreamError("Cannot open file: '${file.path}'")
         }
         fileStream = RandomAccessFile(file, "r")
-
+        Log.d("Test" , "Stream open")
     }
 
     override fun close() {
         fileStream?.close()
         fileStream = null
-        Log.d("TEST", "Processed $bytesRead bytes from file ${file.name}")
+        Log.d("Test"  , "Stream Closed!")
     }
 
     override fun getDescriptor(): PCMHeader {
         return pcmHeader
     }
 
-    override fun readNextFrame(): PCMFrame? {
+    override fun readNextFrame(sampleCount: Int): PCMFrame? {
         val stream = fileStream ?: return null
-
-        if (pcmIterator == PCMIterator.Invalid){
-            throw PCMError.InvalidIterator("Iterator is Invalid : WAV header is not properly formatted. Cannot process file : ${file.name}")
-        }
-
-        if (pcmIterator == PCMIterator.End) return null
 
         if (pcmHeader.getChannelCount() > 1) {
             TODO("Implement multi-channel support")
         }
 
-        try {
-            val offset = pcmHeader.getHeaderSize() + translateIteratorPosition(pcmIterator)
-            stream.seek(offset)
+        return try {
+            stream.seek(byteOffset.toLong())
 
-            val frameByteSize = calculateFrameSize()
-            if (frameByteSize < 0) {
-                return null
-            }
-            val buffer = ByteArray(frameByteSize.toInt())
-            val bytesReadNow = stream.read(buffer)
-            if (bytesReadNow == -1) {
-                pcmIterator = PCMIterator.End
-                return null
-            }
+            val frameByteSize = min(
+                sampleCount * pcmHeader.getBitDepth() / 8,
+                (stream.length() - pcmHeader.getHeaderSize() - byteOffset).toInt()
+            )
 
-            bytesRead += bytesReadNow
-            return WavMonoFrame(header = pcmHeader, rawBytes = buffer)
+            if (frameByteSize <= 0) return null
+
+            val buffer = ByteBuffer.allocate(frameByteSize)
+            val bytesReadNow = stream.read(buffer.array())
+
+            if (bytesReadNow == -1) return null
+
+            byteOffset += bytesReadNow
+            WavMonoFrame(header = pcmHeader, rawBytes = buffer.array())
+
         } catch (e: Exception) {
             e.printStackTrace()
-            throw PCMError.UnknownError(e.message ?: "Unknown error ocurred reading frame from ${file.name}")
-
-        }
-
-    }
-
-    override fun readNextFrame(pcmIterator: PCMIterator): PCMFrame? {
-        if (this.pcmIterator == PCMIterator.Invalid) return null
-        moveCursor(pcmIterator)
-        return readNextFrame()
-    }
-
-    override fun moveCursor(pcmIterator: PCMIterator) {
-        this.pcmIterator = pcmIterator
-    }
-
-    override fun getCursorPosition(): PCMIterator = pcmIterator
-
-    private fun translateIteratorPosition(iterator: PCMIterator): Long {
-        val bytesPerSample = pcmHeader.getBitDepth() / 8
-        val bytesPerFrame = bytesPerSample * pcmHeader.getChannelCount()
-        val sampleRate = pcmHeader.getSampleRate()
-
-        return pcmHeader.getHeaderSize() + when (iterator) {
-            is PCMIterator.ByteIterator -> iterator.value
-            is PCMIterator.MillisecondIterator -> (iterator.value * (sampleRate / 1000) * bytesPerFrame)
-            is PCMIterator.FrameIterator -> iterator.value * bytesPerFrame
-            is PCMIterator.SampleIterator -> iterator.value * bytesPerSample
-            is PCMIterator.Begin -> 0
-            is PCMIterator.End -> file.length() - pcmHeader.getHeaderSize()
-            is PCMIterator.Invalid -> -45
+            throw PCMError.UnknownError("Error reading frame from '${file.name}': ${e.message}")
         }
     }
 
-    private fun calculateFrameSize(): Long {
-        val bytesPerSample = pcmHeader.getBitDepth() / 8
-        val frameSize = (bytesPerSample * pcmHeader.getSampleRate()).toLong()
-        val availableBytes = (fileStream?.length() ?: 0L) - translateIteratorPosition(pcmIterator)
-        return minOf(frameSize, availableBytes)
+
+
+    override fun iterator(): Iterator<PCMFrame> {
+        // Reset file stream to the beginning of the data section
+        byteOffset = pcmHeader.getHeaderSize()
+        currentFrameIndex = 0
+        open()
+        val firstFrame = readNextFrame(samplesPerFrame) ?: return emptyList<PCMFrame>().iterator()
+
+        return PCMIterator.PCMFrameIterator(this, firstFrame, currentFrameIndex, frameCount)
     }
+
+
 }

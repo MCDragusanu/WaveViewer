@@ -1,10 +1,13 @@
 package com.example.waveviewer.audio_stream.pcm
 
-interface PCMFrame {
-    fun getSamples() : ByteArray
-    fun getSampleCount() : Int
-    operator fun get(index : Int) : PCMSample
-    fun getSampleStride() : Int
+interface PCMFrame : Collection<PCMSample> {
+
+    fun getSampleByteStride() : Int
     fun getChannelCount() : Int
     fun getSampleCapacity() : Int
+
+    fun getBytes() : ByteArray
+    fun get(index : Int) : PCMSample
+
+
 }

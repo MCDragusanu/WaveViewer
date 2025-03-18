@@ -1,23 +1,29 @@
-package com.example.waveviewer.audio_stream.wav
-
 import com.example.waveviewer.audio_stream.pcm.PCMSample
 
-sealed class WavPCMSample {
-    class Unsigned8BitSample(byte: Byte) : PCMSample {
-        private val value = byte.toInt() and 0xFF
+sealed class WavPCMSample : PCMSample {
+    class Unsigned8BitSample(byte: Byte) : WavPCMSample() {
+        // 8-bit WAV PCM is unsigned, centered at 128
+        private val value = (byte.toInt() and 0xFF) - 128
 
         override fun getValue(): Int {
             return value
         }
     }
 
-    class Signed16BitSample(b1: Byte, b2: Byte) : PCMSample {
+    class Signed16BitSample(b1: Byte, b2: Byte) : WavPCMSample() {
         private val value: Int
 
         init {
-            val b11 = b1.toInt() and 0xFF
-            val b22 = b2.toInt() shl 8
-            value = (b11 or b22).toShort().toInt()
+            // Little-endian: b1 is the least significant byte
+            // b2 is the most significant byte (contains the sign bit)
+            val unsigned = (b1.toInt() and 0xFF) or ((b2.toInt() and 0xFF) shl 8)
+
+            // Properly handle signed 16-bit values
+            value = if (unsigned >= 0x8000) {
+                unsigned - 0x10000
+            } else {
+                unsigned
+            }
         }
 
         override fun getValue(): Int {
@@ -25,14 +31,21 @@ sealed class WavPCMSample {
         }
     }
 
-    class Signed24BitSample(b1: Byte, b2: Byte, b3: Byte) : PCMSample {
+    class Signed24BitSample(b1: Byte, b2: Byte, b3: Byte) : WavPCMSample() {
         private val value: Int
 
         init {
-            val b11 = b1.toInt() and 0xFF
-            val b22 = b2.toInt() and 0xFF shl 8
-            val b33 = b3.toInt() shl 16
-            value = (b11 or b22 or b33) or (if (b33 and 0x800000 != 0) 0xFF000000.toInt() else 0)
+            // Little-endian: b1 is LSB, b3 is MSB (with sign bit)
+            val unsigned = (b1.toInt() and 0xFF) or
+                    ((b2.toInt() and 0xFF) shl 8) or
+                    ((b3.toInt() and 0xFF) shl 16)
+
+            // Properly handle signed 24-bit values
+            value = if (unsigned >= 0x800000) {
+                unsigned - 0x1000000
+            } else {
+                unsigned
+            }
         }
 
         override fun getValue(): Int {
