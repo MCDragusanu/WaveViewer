@@ -51,15 +51,15 @@ class WavMonoFrame(header : PCMHeader, private val rawBytes : ByteArray) : PCMFr
         get() = getSampleCount()
 
     override fun contains(element: PCMSample): Boolean {
-        TODO("Not yet implemented")
+        return false
     }
 
     override fun containsAll(elements: Collection<PCMSample>): Boolean {
-        TODO("Not yet implemented")
+       return false
     }
 
     override fun isEmpty(): Boolean {
-        TODO("Not yet implemented")
+       return sampleCount == 0
     }
 
     override fun getSampleByteStride(): Int = sampleStride
