@@ -102,6 +102,8 @@ class WavInputStream(private val file: File, private val samplesPerFrame : Int =
 
     override fun setProgress(progress: Float) {
         try {
+
+
             // Ensure progress is within valid range
             val clampedProgress = progress.coerceIn(0f, 1f)
 
@@ -111,12 +113,16 @@ class WavInputStream(private val file: File, private val samplesPerFrame : Int =
 
             // Align to the nearest sample (to avoid reading partial samples)
             val bytesPerSample = pcmHeader.getBitDepth() / 8
+
+            val totalSamples = (totalSampleByteSize) / bytesPerSample
+            val durationMs= ((totalSamples / pcmHeader.getSampleRate()) * 1000) * progress
+
             val alignedByteOffset = (bytePosition / bytesPerSample) * bytesPerSample
 
             // Set the new byte offset, making sure we don’t seek before header
             byteOffset = pcmHeader.getHeaderSize() + alignedByteOffset
 
-            Log.d("Test", "Seeking to byte offset: $byteOffset (Progress: $clampedProgress)")
+            Log.d("Test", "WAV Stream pos : ${durationMs} ms")
 
             // Seek the file stream to the new position
             fileStream?.seek(byteOffset.toLong())

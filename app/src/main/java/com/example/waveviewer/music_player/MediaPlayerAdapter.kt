@@ -44,7 +44,7 @@ class MediaPlayerAdapter(context: Context, private val listener: MediaPlayerList
             setOnSeekCompleteListener {
                 Log.d(TAG, "Seek Completed")
                 listener.onSeekCompleted()
-                currentState = LiveFeedClock.ClockState.Default
+                //currentState = LiveFeedClock.ClockState.Default
             }
         }
     }
@@ -54,7 +54,7 @@ class MediaPlayerAdapter(context: Context, private val listener: MediaPlayerList
             when (currentState) {
                 LiveFeedClock.ClockState.Playing -> {
                     if (mediaPlayer.isPlaying) {
-                       // Log.d("Test"  ,"Media Player Pos : ${mediaPlayer.currentPosition}ms ${mediaPlayer.currentPosition *1000} ms")
+                        Log.d("Test"  ,"Media Player Pos : ${mediaPlayer.currentPosition} ms")
                         emit(mediaPlayer.currentPosition.toLong())
                     } else {
                         Log.w(TAG, "State Playing but MediaPlayer is not playing")

@@ -17,6 +17,7 @@ import com.example.waveviewer.audio_stream.wav.WavInputStream
 import com.example.waveviewer.music_player.MediaPlayerAdapter
 import com.example.waveviewer.music_player.MediaPlayerListener
 import com.example.waveviewer.ui.theme.WaveViewerTheme
+import com.example.waveviewer.view.BarWaveForm
 import com.example.waveviewer.view.DefaultAudioPannel
 import com.example.waveviewer.view.LiveFeedClock
 import com.example.waveviewer.view.WaveForm
@@ -37,21 +38,21 @@ class MainActivity : ComponentActivity() , MediaPlayerListener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         mediaPlayerAdapter = MediaPlayerAdapter(this , this)
-        val file = getFileFromAssetFd(this, "music_mono_44100Hz_16bit.wav")
+        val file = getFileFromAssetFd(this, "whistle_mono_44100Hz_16bit.wav")
         val wavStream = WavInputStream(file)
         wavStream.open()
         mediaPlayerAdapter.setAudioFile(file.path)
         setContent {
             WaveViewerTheme {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    WaveForm.LiveFeed(
+                    BarWaveForm.BarWaveForm(
                         clock = mediaPlayerAdapter,
                         sampleRate = wavStream.getDescriptor().getSampleRate(),
-                        bitDepth = wavStream.getDescriptor().getBitDepth(),
                         audioPlayer = DefaultAudioPannel,
+                        bitDepth = wavStream.getDescriptor().getBitDepth(),
                         jumpToPosition = { progress ->
-                            wavStream.setProgress(progress)
-                            mediaPlayerAdapter.setProgress(progress)
+                           wavStream.setProgress(progress)
+                            //mediaPlayerAdapter.setProgress(progress)
                         }
                     ) { sampleCount->
                         wavStream.readNextFrame(sampleCount)

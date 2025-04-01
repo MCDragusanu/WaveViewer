@@ -84,7 +84,7 @@ object WaveForm {
         audioPlayer: AudioPlayer,
         sampleRate: Int,
         bitDepth: Int,
-        bufferSampleSize : Int = sampleRate /8,
+        bufferSampleSize : Int = sampleRate ,
         jumpToPosition: (Float) -> Unit,
         getNextFrame: (sampleCount: Int) -> PCMFrame?
 
@@ -102,19 +102,36 @@ object WaveForm {
             }
         }
 
-        LaunchedEffect(currentTick) {
+       /* LaunchedEffect(currentTick) {
             withContext(Dispatchers.IO) {
-                currentProgress = currentTick / clock.getLengthInMs().toFloat()
+
+                currentProgress = (currentTick + 120)/ clock.getLengthInMs().toFloat()
                 jumpToPosition(currentProgress)
                 val frame = getNextFrame(samplesToShift) ?: return@withContext
                 val removeCount = min(samplesToShift, currentFrame.size)
                 if (removeCount > 0) {
                     currentFrame.subList(0, removeCount).clear()
                 }
-                Log.d(
-                    "Test ",
-                    "Current Tick : ${currentTick / 1000} s FrameSize : ${currentFrame.size} Progress : ${currentProgress} TotalLength :${clock.getLengthInMs() / 1000}s"
-                )
+
+                currentFrame.addAll(frame)
+            }
+        }*/
+        var sampleAccumulator = 0f
+
+        LaunchedEffect(currentTick) {
+            withContext(Dispatchers.IO) {
+                sampleAccumulator += (sampleRate * (clock.getDelayTime() / 1000f))
+                val samplesToFetch = sampleAccumulator.toInt()  // Extract integer part
+                sampleAccumulator -= samplesToFetch  // Keep fractional remainder
+                currentProgress = (currentTick + 120)/ clock.getLengthInMs().toFloat()
+                jumpToPosition(currentProgress)
+                val frame = getNextFrame(samplesToFetch) ?: return@withContext
+                val removeCount = min(samplesToFetch, currentFrame.size)
+
+                if (removeCount > 0) {
+                    currentFrame.subList(0, removeCount).clear()
+                }
+
                 currentFrame.addAll(frame)
             }
         }
