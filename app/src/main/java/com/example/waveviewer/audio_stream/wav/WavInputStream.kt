@@ -122,7 +122,6 @@ class WavInputStream(private val file: File, private val samplesPerFrame : Int =
             // Set the new byte offset, making sure we don’t seek before header
             byteOffset = pcmHeader.getHeaderSize() + alignedByteOffset
 
-            Log.d("Test", "WAV Stream pos : ${durationMs} ms")
 
             // Seek the file stream to the new position
             fileStream?.seek(byteOffset.toLong())

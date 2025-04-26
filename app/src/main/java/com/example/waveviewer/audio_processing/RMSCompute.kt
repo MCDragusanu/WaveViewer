@@ -16,7 +16,6 @@ class RMSCompute {
                 val rms = sqrt(ms)
                 rms
             }.toTypedArray()
-            Log.d("Test" , "Computed : ${processed.size} bars")
             return processed
         }
 

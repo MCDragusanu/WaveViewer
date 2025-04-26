@@ -8,10 +8,13 @@ import kotlin.math.max
 
 class WavMonoFrame(header : PCMHeader, private val rawBytes : ByteArray) : PCMFrame {
 
-    private val sampleStride = header.getBitDepth() / 8
+    private val sampleStride = 2
     private val sampleCapacity = max(header.getSampleRate(), rawBytes.size)
     private val sampleCount = rawBytes.size / sampleStride
 
+    companion object{
+        val EMPTY_FRAME =  WavMonoFrame(WavHeader(ByteArray(44) ), ByteArray(0))
+    }
     override fun getBytes(): ByteArray {
         return rawBytes
     }
@@ -19,20 +22,16 @@ class WavMonoFrame(header : PCMHeader, private val rawBytes : ByteArray) : PCMFr
     fun getSampleCount(): Int = sampleCount
 
    override fun get(index: Int): PCMSample {
-        // Validate index boundaries
         if (index < 0 || index >= sampleCount) {
             throw IndexOutOfBoundsException("Sample index $index out of bounds (valid range: 0-${sampleCount - 1})")
         }
 
         val where = index * sampleStride
 
-        // Validate that there's enough bytes remaining for a complete sample
         if (where + sampleStride > rawBytes.size) {
             throw PCMError.InvalidIterator("Not enough bytes to read a complete sample at index $index")
         }
-
-        // Create the sample
-        val sample = when (sampleStride) {
+       val sample = when (sampleStride) {
             1 -> WavPCMSample.Unsigned8BitSample(rawBytes[where])
             2 -> WavPCMSample.Signed16BitSample(rawBytes[where], rawBytes[where + 1])
             3 -> WavPCMSample.Signed24BitSample(
@@ -69,11 +68,8 @@ class WavMonoFrame(header : PCMHeader, private val rawBytes : ByteArray) : PCMFr
     override fun getSampleCapacity(): Int = sampleCapacity
 
     override fun iterator(): Iterator<PCMSample> {
-        val sample = object : PCMSample {
-            override fun getValue(): Int {
-                return -1
-            }
-        }
+        val sample = get(0)
+
         return PCMIterator.PCMSampleIterator(this, sample, 0, this.sampleCount)
     }
 }

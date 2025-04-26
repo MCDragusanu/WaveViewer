@@ -33,7 +33,7 @@ import kotlin.math.min
 object BarWaveForm {
 
     @Composable
-    fun BarWaveForm(
+    fun LiveFeedBarWaveform(
         clock: LiveFeedClock,
         audioPlayer: AudioPlayer,
         sampleRate: Int,
@@ -43,7 +43,7 @@ object BarWaveForm {
         getNextFrame: (sampleCount: Int) -> PCMFrame?
     ) {
         val samplesPerBar = (sampleRate  * ( clock.getDelayTime() / 1000f)).toInt()
-        val barCountBufferSize = sampleRate / samplesPerBar
+        val barCountBufferSize = 100//sampleRate / samplesPerBar
         val currentTick by clock.getClock().collectAsState(0)
         var currentProgress by remember { mutableFloatStateOf(00.0f) }
         val currentFrame = remember { mutableStateListOf<Double>() }
@@ -60,16 +60,17 @@ object BarWaveForm {
        LaunchedEffect(currentTick) {
             withContext(Dispatchers.IO) {
 
-                currentProgress = (currentTick ) / clock.getLengthInMs().toFloat()
-                jumpToPosition(currentProgress)
                 val frame = getNextFrame(samplesPerBar) ?: return@withContext
                 val processed = RMSCompute.computeRMS(frame , samplesPerBar)
                 val minCount = min(processed.size , frame.size)
                 if(currentFrame.isNotEmpty()){
                     currentFrame.removeRange(0 , minCount)
                 }
-
                 currentFrame.addAll(processed)
+                val latencyTime= (samplesPerBar * 2 / sampleRate) * 1000f
+                currentProgress = (currentTick + latencyTime) / clock.getLengthInMs().toFloat()
+                jumpToPosition(currentProgress)
+
             }
         }
 
@@ -106,16 +107,81 @@ object BarWaveForm {
         }
     }
 
+    //Sa zic ca impart in N diviziuni
+    //Calculez lungimea in timp  fiecarei divizuni
+    @Composable
+    fun StaticWaveBar(
+        clock: LiveFeedClock,
+        audioPlayer: AudioPlayer,
+        sampleRate: Int,
+        bitDepth: Int,
+        jumpToPosition: (Float) -> Unit,
+        getNextFrame: (sampleCount: Int) -> PCMFrame?
+    ) {
+        val samplesPerBar = sampleRate / 10
+        val barCountBufferSize = 10 //sampleRate / samplesPerBar
+        val currentTick by clock.getClock().collectAsState(0)
+        var currentProgress by remember { mutableFloatStateOf(00.0f) }
+        val currentFrame = remember { mutableStateListOf<Double>() }
+        var reset by remember { mutableStateOf(false) }
+        LaunchedEffect(true) {
+            withContext(Dispatchers.IO) {
+                var batch: PCMFrame? = null
+                do {
+                    batch = getNextFrame(samplesPerBar * barCountBufferSize)
+                    batch?.let { current ->
+                        val processed = RMSCompute.computeRMS(current, samplesPerBar)
+                        currentFrame.addAll(processed)
+                    }
+
+                } while (batch != null)
+                Log.d("Test" , "Count = ${batch?.size}")
+            }
+        }
+
+
+
+
+        Column(
+            modifier = Modifier.wrapContentHeight().fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            BarList(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp), bitDepth =bitDepth,
+                bars = currentFrame.toTypedArray()
+            )
+
+            audioPlayer.Content(
+                modifier = Modifier.fillMaxWidth(),
+                currentProgress = currentProgress,
+                totalDurationMs = clock.getLengthInMs(),
+                onPause = {
+                    clock.pause()
+                },
+                onStart = {
+                    clock.start()
+                },
+                onPositionChanged = { progress ->
+                    reset = !reset
+                    clock.setProgress(progress)
+                    jumpToPosition(progress)
+                })
+
+        }
+    }
     @Composable
     fun BarList(modifier: Modifier, bars: Array<Double>, bitDepth: Int) {
         val maxAmplitude = (1 shl (bitDepth - 1)).toDouble() *0.5// Max amplitude based on bit depth
         LazyRow(
             modifier = modifier.then(Modifier.fillMaxWidth()),
-            horizontalArrangement = Arrangement.spacedBy(1.dp),
+            horizontalArrangement = Arrangement.spacedBy(0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             items(bars) { amplitude ->
-                BarItem(amplitude / maxAmplitude , modifier = Modifier.fillParentMaxWidth(1f/bars.size))
+                BarItem(amplitude / maxAmplitude , modifier = Modifier.fillParentMaxWidth(1.0f / bars.size))
             }
         }
     }
