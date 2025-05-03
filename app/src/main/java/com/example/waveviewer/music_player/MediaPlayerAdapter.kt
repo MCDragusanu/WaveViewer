@@ -3,13 +3,13 @@ package com.example.waveviewer.music_player
 import android.content.Context
 import android.media.MediaPlayer
 import android.util.Log
-import com.example.waveviewer.view.LiveFeedClock
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 
-class MediaPlayerAdapter(context: Context, private val listener: MediaPlayerListener) : LiveFeedClock {
+class MediaPlayerAdapter(context: Context, private val listener: MediaPlayerListener) :
+    LiveFeedClock {
     private val mediaPlayer: MediaPlayer = MediaPlayer()
     private var currentState: LiveFeedClock.ClockState = LiveFeedClock.ClockState.Default
 

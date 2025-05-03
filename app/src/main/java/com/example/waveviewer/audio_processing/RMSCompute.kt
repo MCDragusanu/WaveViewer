@@ -1,12 +1,11 @@
 package com.example.waveviewer.audio_processing
 
-import android.util.Log
-import com.example.waveviewer.audio_stream.pcm.PCMFrame
+import com.example.waveviewer.audio_stream.pcm.mono.MonoPCMFrame
 import kotlin.math.sqrt
 
 class RMSCompute {
     companion object{
-        fun computeRMS(frame : PCMFrame , sampleCount : Int = 44100) : Array<Double>{
+        fun computeRMS(frame : MonoPCMFrame, sampleCount : Int = 44100) : Array<Double>{
             val processed = frame.chunked(sampleCount).map { slice ->
                 var s = 0.0
                 for (pcmSample in slice) {

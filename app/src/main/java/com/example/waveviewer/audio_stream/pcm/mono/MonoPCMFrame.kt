@@ -1,6 +1,8 @@
-package com.example.waveviewer.audio_stream.pcm
+package com.example.waveviewer.audio_stream.pcm.mono
 
-interface PCMFrame : Collection<PCMSample> {
+import com.example.waveviewer.audio_stream.pcm.PCMSample
+
+interface MonoPCMFrame : Collection<PCMSample> {
 
     fun getSampleByteStride() : Int
     fun getChannelCount() : Int

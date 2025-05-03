@@ -1,4 +1,4 @@
-package com.example.waveviewer.view
+package com.example.waveviewer.music_player
 
 import kotlinx.coroutines.flow.Flow
 
@@ -50,7 +50,7 @@ interface LiveFeedClock {
 
      fun setState(newState : ClockState)
 
-     fun getCurrentState() :ClockState
+     fun getCurrentState() : ClockState
 
      fun setProgress(progress : Float)
 }

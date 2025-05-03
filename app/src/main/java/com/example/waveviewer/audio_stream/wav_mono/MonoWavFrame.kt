@@ -1,19 +1,20 @@
-package com.example.waveviewer.audio_stream.wav
+package com.example.waveviewer.audio_stream.wav_mono
 
 import com.example.waveviewer.audio_stream.pcm.PCMError
 import com.example.waveviewer.audio_stream.pcm.PCMHeader
-import com.example.waveviewer.audio_stream.pcm.PCMFrame
+import com.example.waveviewer.audio_stream.pcm.mono.MonoPCMFrame
 import com.example.waveviewer.audio_stream.pcm.PCMSample
+import com.example.waveviewer.audio_stream.wav.WavHeader
 import kotlin.math.max
 
-class WavMonoFrame(header : PCMHeader, private val rawBytes : ByteArray) : PCMFrame {
+class MonoWavFrame(header : PCMHeader, private val rawBytes : ByteArray) : MonoPCMFrame {
 
     private val sampleStride = 2
     private val sampleCapacity = max(header.getSampleRate(), rawBytes.size)
     private val sampleCount = rawBytes.size / sampleStride
 
     companion object{
-        val EMPTY_FRAME =  WavMonoFrame(WavHeader(ByteArray(44) ), ByteArray(0))
+        val EMPTY_FRAME =  MonoWavFrame(WavHeader(ByteArray(44) ), ByteArray(0))
     }
     override fun getBytes(): ByteArray {
         return rawBytes
@@ -61,15 +62,27 @@ class WavMonoFrame(header : PCMHeader, private val rawBytes : ByteArray) : PCMFr
        return sampleCount == 0
     }
 
+    override fun iterator(): Iterator<PCMSample> {
+        return object : Iterator<PCMSample> {
+            var index = 0
+
+            override fun hasNext(): Boolean {
+                return index < sampleCount
+            }
+
+            override fun next(): PCMSample {
+                if (!hasNext()) throw NoSuchElementException()
+                return get(index++)
+            }
+        }
+    }
+
+
     override fun getSampleByteStride(): Int = sampleStride
 
     override fun getChannelCount(): Int = 1
 
     override fun getSampleCapacity(): Int = sampleCapacity
 
-    override fun iterator(): Iterator<PCMSample> {
-        val sample = get(0)
 
-        return PCMIterator.PCMSampleIterator(this, sample, 0, this.sampleCount)
-    }
 }

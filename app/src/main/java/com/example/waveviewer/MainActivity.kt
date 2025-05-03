@@ -14,16 +14,11 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.waveviewer.audio_processing.RMSCompute
-import com.example.waveviewer.audio_stream.wav.WavInputStream
+import com.example.waveviewer.audio_stream.wav_mono.MonoWavStream
 import com.example.waveviewer.music_player.MediaPlayerAdapter
 import com.example.waveviewer.music_player.MediaPlayerListener
 import com.example.waveviewer.ui.theme.WaveViewerTheme
-import com.example.waveviewer.view.BarWaveForm
-import com.example.waveviewer.view.DefaultAudioPannel
-import com.example.waveviewer.view.WaveForm
-import com.example.waveviewer.view.waveform.WaveViewer
-import kotlinx.coroutines.flow.asFlow
+import com.example.waveviewer.view.waveform.MonoWaveViewer
 import java.io.File
 import java.lang.Exception
 
@@ -36,7 +31,7 @@ class MainActivity : ComponentActivity() , MediaPlayerListener {
         enableEdgeToEdge()
         mediaPlayerAdapter = MediaPlayerAdapter(this, this)
         val file = getFileFromAssetFd(this, "music_mono_44100Hz_16bit.wav")
-        val wavStream = WavInputStream(file)
+        val wavStream = MonoWavStream(file)
         wavStream.open()
         mediaPlayerAdapter.setAudioFile(file.path)
         setContent {
@@ -52,7 +47,7 @@ class MainActivity : ComponentActivity() , MediaPlayerListener {
                         ),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        WaveViewer(
+                        MonoWaveViewer(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight(),

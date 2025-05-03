@@ -18,19 +18,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.waveviewer.audio_processing.RMSCompute
-import com.example.waveviewer.audio_stream.pcm.PCMFrame
-import com.example.waveviewer.audio_stream.pcm.PCMInputStream
+import com.example.waveviewer.audio_stream.pcm.mono.MonoPCMStream
 
 @Composable
-fun WaveViewer(modifier : Modifier, windowSize : Int, songDurationInMs : Int,samplesPerFrame : Int = 44100, downSampleFactor : Int = 10, stream : PCMInputStream) {
+fun MonoWaveViewer(modifier : Modifier, windowSize : Int, songDurationInMs : Int, samplesPerFrame : Int = 44100, stream : MonoPCMStream) {
 
+
+    //TODO fix the sub division settings
+    //take duration and divide by number of divisions
+    //with that divDuration process everything
     if (!stream.isOpen()) {
         stream.open()
     }
 
     var currentProgress by remember { mutableFloatStateOf(0.0f) }
     val currentFrames = remember { mutableStateListOf<Pair<Array<Double>, String>>() }
-    val samplesPerBar = 441
+    val samplesPerBar = 4410
     Log.d("TEST" , "Song Length : ${formatDuration(songDurationInMs.toFloat())} , SamplesPerBar : $samplesPerBar")
 
     LaunchedEffect(currentProgress) {
@@ -59,7 +62,7 @@ fun WaveViewer(modifier : Modifier, windowSize : Int, songDurationInMs : Int,sam
 
             //Perform down sampling
             val downSampledFrame =
-                RMSCompute.computeRMS(currentFrame, samplesPerBar)
+                RMSCompute.computeRMS (currentFrame, samplesPerBar)
 
             Log.d("TEST" , "Frame Timestamp : ${label} RMS Count : ${downSampledFrame.size}")
 

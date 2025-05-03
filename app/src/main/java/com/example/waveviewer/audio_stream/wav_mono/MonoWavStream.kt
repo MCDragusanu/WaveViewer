@@ -1,48 +1,36 @@
-package com.example.waveviewer.audio_stream.wav
+package com.example.waveviewer.audio_stream.wav_mono
 
-import PCMIterator
 import android.util.Log
 import android.util.Range
 import com.example.waveviewer.audio_stream.pcm.PCMError
 import com.example.waveviewer.audio_stream.pcm.PCMHeader
-import com.example.waveviewer.audio_stream.pcm.PCMFrame
-import com.example.waveviewer.audio_stream.pcm.PCMInputStream
+import com.example.waveviewer.audio_stream.pcm.mono.MonoPCMFrame
+import com.example.waveviewer.audio_stream.pcm.mono.MonoPCMStream
+import com.example.waveviewer.audio_stream.wav.WavHeader
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import kotlin.math.min
 
-class WavInputStream(private val file: File, private val samplesPerFrame : Int = 44100,
+class MonoWavStream(private val file: File,
+                    private val samplesPerFrame : Int = 44100) : MonoPCMStream() {
 
-) : PCMInputStream() {
-
-    override val size: Int = file.length().toInt()
-
-    override fun contains(element: PCMFrame): Boolean {
-        return firstOrNull { it.hashCode() == element.hashCode() }!=null
-    }
-
-    override fun containsAll(elements: Collection<PCMFrame>): Boolean {
-       return elements.count { !contains(it) } == 0
-    }
-
-    override fun isEmpty(): Boolean {
-        return size <= pcmHeader.getHeaderSize()
-    }
 
     private val pcmHeader: WavHeader
     private var byteOffset = 0
     private var fileStream: RandomAccessFile? = null
     private var frameCount : Int
     private var currentFrameIndex : Int = 0
-    init {
-        val headerBuff = ByteArray(44)
-        file.inputStream().use {
-            it.read(headerBuff)
-            frameCount = it.available() / samplesPerFrame
-        }
-        pcmHeader = WavHeader(headerBuff)
 
+    init {
+
+        file.inputStream().use {
+            val headerBuff = ByteArray(44)
+            it.read(headerBuff)
+            pcmHeader = WavHeader(headerBuff)
+        }
+
+        frameCount = pcmHeader.getSampleCount() / samplesPerFrame
     }
 
     override fun open() {
@@ -50,6 +38,7 @@ class WavInputStream(private val file: File, private val samplesPerFrame : Int =
             throw PCMError.FileStreamError("Cannot open file: '${file.path}'")
         }
         fileStream = RandomAccessFile(file, "r")
+        resetReading()
         Log.d("Test" , "Stream open")
     }
 
@@ -63,38 +52,6 @@ class WavInputStream(private val file: File, private val samplesPerFrame : Int =
         return pcmHeader
     }
 
-    override fun getRange(range: Range<Int>, sampleCountPerFrame: Int ): Array<PCMFrame> {
-        resetReading()
-
-        if (pcmHeader.getChannelCount() > 1) {
-            TODO("Implement multi-channel support")
-        }
-
-        try {
-            byteOffset += range.lower * sampleCountPerFrame
-            val list = arrayListOf<PCMFrame>()
-
-            this.use {
-                for(i in range.lower until range.upper){
-                    val frame = readNextFrame(sampleCountPerFrame) ?: break
-                    list.add(frame)
-                }
-            }
-            resetReading()
-            return list.toTypedArray()
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return emptyArray()
-        }
-    }
-
-    override fun getTotalFrameCount(frameSampleCount: Int): Int {
-        val totalSize = file.length()
-        val totalSampleByteSize = totalSize - pcmHeader.getHeaderSize()
-        val frameByteSize = frameSampleCount * (pcmHeader.getBitDepth() /8)
-        return (totalSampleByteSize / frameByteSize).toInt()
-    }
 
     override fun isOpen() : Boolean{
         return this.fileStream!=null
@@ -102,13 +59,11 @@ class WavInputStream(private val file: File, private val samplesPerFrame : Int =
 
     override fun setProgress(progress: Float) {
         try {
-
-
             // Ensure progress is within valid range
             val clampedProgress = progress.coerceIn(0f, 1f)
 
             // Calculate the exact byte offset based on progress
-            val totalSampleByteSize = size - pcmHeader.getHeaderSize()
+            val totalSampleByteSize = file.length() - pcmHeader.getHeaderSize()
             val bytePosition = (clampedProgress * totalSampleByteSize).toInt()
 
             // Align to the nearest sample (to avoid reading partial samples)
@@ -131,7 +86,7 @@ class WavInputStream(private val file: File, private val samplesPerFrame : Int =
         }
     }
 
-    override fun readNextFrame(sampleCount: Int): PCMFrame? {
+    override fun readNextFrame(sampleCount: Int): MonoPCMFrame? {
         val stream = fileStream ?: return null
 
         if (pcmHeader.getChannelCount() > 1) {
@@ -154,7 +109,7 @@ class WavInputStream(private val file: File, private val samplesPerFrame : Int =
             if (bytesReadNow == -1) return null
 
             byteOffset += bytesReadNow
-            WavMonoFrame(header = pcmHeader, rawBytes = buffer.array())
+            MonoWavFrame(header = pcmHeader, rawBytes = buffer.array())
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -167,14 +122,7 @@ class WavInputStream(private val file: File, private val samplesPerFrame : Int =
         currentFrameIndex = 0
 
     }
-    override fun iterator(): Iterator<PCMFrame> {
-        // Reset file stream to the beginning of the data section
-        resetReading()
-        open()
-        val firstFrame = readNextFrame(samplesPerFrame) ?: return emptyList<PCMFrame>().iterator()
 
-        return PCMIterator.PCMFrameIterator(this, firstFrame, currentFrameIndex, frameCount)
-    }
 
 
 }
