@@ -15,10 +15,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.waveviewer.audio_stream.wav_mono.MonoWavStream
+import com.example.waveviewer.audio_stream.wav_stereo.StereoWavStream
 import com.example.waveviewer.music_player.MediaPlayerAdapter
 import com.example.waveviewer.music_player.MediaPlayerListener
 import com.example.waveviewer.ui.theme.WaveViewerTheme
 import com.example.waveviewer.view.waveform.MonoWaveViewer
+import com.example.waveviewer.view.waveform.StereoWaveViewer
 import java.io.File
 import java.lang.Exception
 
@@ -30,8 +32,8 @@ class MainActivity : ComponentActivity() , MediaPlayerListener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         mediaPlayerAdapter = MediaPlayerAdapter(this, this)
-        val file = getFileFromAssetFd(this, "music_mono_44100Hz_16bit.wav")
-        val wavStream = MonoWavStream(file)
+        val file = getFileFromAssetFd(this, "stereo.wav")
+        val wavStream = StereoWavStream(file)
         wavStream.open()
         mediaPlayerAdapter.setAudioFile(file.path)
         setContent {
@@ -47,12 +49,13 @@ class MainActivity : ComponentActivity() , MediaPlayerListener {
                         ),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        MonoWaveViewer(
+                        StereoWaveViewer(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight(),
                             songDurationInMs = mediaPlayerAdapter.getLengthInMs().toInt(),
-                            windowSize = 8,
+                            visibleFrameCount =50,
+                            totalFrames = 100,
                             stream = wavStream
                         )
                     }

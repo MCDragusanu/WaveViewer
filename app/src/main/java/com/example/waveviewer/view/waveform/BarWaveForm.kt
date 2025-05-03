@@ -55,15 +55,6 @@ fun WaveForm(
                         waveColor = waveColor
                     )
 
-                    // Vertical divider on right edge
-                    VerticalDivider(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .align(Alignment.CenterEnd),
-                        thickness = 1.dp,
-                        color = dividerColor
-                    )
-
                     // Timestamp label
                     Box(
                         modifier = Modifier
@@ -94,7 +85,7 @@ fun BarList(
     val maxAmplitude = (1 shl (bitDepth - 1)).toDouble() * 0.5 // Max amplitude based on bit depth
     LazyRow(
         modifier = modifier.then(Modifier.fillMaxWidth()),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = Arrangement.spacedBy(1.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         items(bars) { amplitude ->

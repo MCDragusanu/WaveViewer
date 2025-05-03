@@ -12,11 +12,10 @@ import com.example.waveviewer.audio_stream.wav_mono.MonoWavFrame
 import java.io.File
 import java.io.RandomAccessFile
 
-class StereoWavStream(private val file : File , samplesPerFrame : Int) : StereoPCMStream {
+class StereoWavStream(private val file : File) : StereoPCMStream {
     private val pcmHeader: WavHeader
     private var byteOffset = 0
     private var fileStream: RandomAccessFile? = null
-    private var frameCount : Int
     private var currentFrameIndex : Int = 0
 
     init {
@@ -26,8 +25,6 @@ class StereoWavStream(private val file : File , samplesPerFrame : Int) : StereoP
             it.read(headerBuff)
             pcmHeader = WavHeader(headerBuff)
         }
-        val channelSampleCount =  (file.length().toInt() -44) / pcmHeader.getChannelCount() / (pcmHeader.getBitDepth() / 8)
-        frameCount = channelSampleCount / samplesPerFrame
         byteOffset = 44
     }
 
@@ -98,6 +95,24 @@ class StereoWavStream(private val file : File , samplesPerFrame : Int) : StereoP
     }
 
     override fun setProgress(progress: Float) {
-        TODO("Not yet implemented")
+        if (progress < 0.0f || progress > 1.0f) {
+            throw IllegalArgumentException("Progress must be between 0.0 and 1.0")
+        }
+
+        val bitDepthBytes = pcmHeader.getBitDepth() / 8
+        val bytesPerStereoSample = 2 * bitDepthBytes
+        val totalDataLength = pcmHeader.getSampleCount()
+
+        // Compute aligned byte offset within the data section (excluding the 44-byte header)
+        var byteOffsetInData = (progress * totalDataLength).toInt()
+
+        // Align to the nearest lower multiple of a full stereo sample
+        byteOffsetInData -= byteOffsetInData % bytesPerStereoSample
+
+        // Update internal offset, adding 44 bytes for WAV header
+        byteOffset = 44 + byteOffsetInData
+
+        // Optional: update current frame index
+        currentFrameIndex = byteOffsetInData / bytesPerStereoSample
     }
 }
