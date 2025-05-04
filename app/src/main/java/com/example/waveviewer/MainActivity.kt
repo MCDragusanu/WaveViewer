@@ -14,13 +14,14 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.waveviewer.audio_stream.pcm.bit_stream.stereo.PCMStreamFactory
 import com.example.waveviewer.audio_stream.wav_mono.MonoWavStream
 import com.example.waveviewer.audio_stream.wav_stereo.StereoWavStream
 import com.example.waveviewer.music_player.MediaPlayerAdapter
 import com.example.waveviewer.music_player.MediaPlayerListener
 import com.example.waveviewer.ui.theme.WaveViewerTheme
-import com.example.waveviewer.view.waveform.MonoWaveViewer
-import com.example.waveviewer.view.waveform.StereoWaveViewer
+
+import com.example.waveviewer.view.waveform.UniversalWaveViewer
 import java.io.File
 import java.lang.Exception
 
@@ -33,8 +34,8 @@ class MainActivity : ComponentActivity() , MediaPlayerListener {
         enableEdgeToEdge()
         mediaPlayerAdapter = MediaPlayerAdapter(this, this)
         val file = getFileFromAssetFd(this, "stereo.wav")
-        val wavStream = StereoWavStream(file)
-        wavStream.open()
+        val wavStream = PCMStreamFactory.getInstance().provideBitStream(file)
+
         mediaPlayerAdapter.setAudioFile(file.path)
         setContent {
             WaveViewerTheme {
@@ -49,12 +50,12 @@ class MainActivity : ComponentActivity() , MediaPlayerListener {
                         ),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        StereoWaveViewer(
+                        UniversalWaveViewer(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight(),
                             songDurationInMs = mediaPlayerAdapter.getLengthInMs().toInt(),
-                            visibleFrameCount =50,
+                            visibleFrameCount =10,
                             totalFrames = 100,
                             stream = wavStream
                         )

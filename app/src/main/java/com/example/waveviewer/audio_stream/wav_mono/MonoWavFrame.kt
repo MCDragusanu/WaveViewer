@@ -2,7 +2,7 @@ package com.example.waveviewer.audio_stream.wav_mono
 
 import com.example.waveviewer.audio_stream.pcm.PCMError
 import com.example.waveviewer.audio_stream.pcm.PCMHeader
-import com.example.waveviewer.audio_stream.pcm.mono.MonoPCMFrame
+import com.example.waveviewer.audio_stream.pcm.bit_stream.mono.MonoPCMFrame
 import com.example.waveviewer.audio_stream.pcm.PCMSample
 import com.example.waveviewer.audio_stream.wav.WavHeader
 import kotlin.math.max

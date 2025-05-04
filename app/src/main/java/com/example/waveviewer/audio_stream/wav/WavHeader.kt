@@ -5,83 +5,28 @@ import com.example.waveviewer.audio_stream.pcm.PCMHeader
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class WavHeader// Parse the header
-
-// Validate the header
-// Check minimum size
-
-// Store raw bytes
 /**
- * Constructor that validates the provided byte array as a WAV header.
- *
- * @param byteArray The raw byte array to parse as a WAV header
- * @throws PCMError.InvalidHeader if the byte array does not contain a valid WAV header
- */(byteArray: ByteArray) : PCMHeader {
-
-
-    private val rawBytes: ByteArray = byteArray
-
-    // Standard WAV header fields with descriptive names
-    private val riffChunkId: String
-    private val chunkSize: Int
-    private val waveFormat: String
-    private val formatChunkId: String
-    private val formatChunkSize: Int
-    private val formatCode: Int
-    private val channelCount: Int
-    private val sampleRate: Int
-    private val byteRate: Int
-    private val blockAlign: Int
-    private val bitsPerSample: Int
-    private val dataChunkId: String
-    private val dataSize: Int
-
-    init {
-        if (byteArray.size < MINIMUM_HEADER_SIZE) {
-            throw PCMError.InvalidHeader("WAV header is too small: ${byteArray.size} bytes (minimum $MINIMUM_HEADER_SIZE bytes required)")
-        }
-        try {
-            // Parse the header
-            riffChunkId = String(byteArray, 0, 4)
-            chunkSize = readIntLE(4)
-            waveFormat = String(byteArray, 8, 4)
-            formatChunkId = String(byteArray, 12, 4)
-            formatChunkSize = readIntLE(16)
-            formatCode = readShortLE(20)
-            channelCount = readShortLE(22)
-            sampleRate = readIntLE(24)
-            byteRate = readIntLE(28)
-            blockAlign = readShortLE(32)
-            bitsPerSample = readShortLE(34)
-            dataChunkId = String(byteArray, 36, 4)
-            dataSize = readIntLE(40)
-
-            // Validate the header
-            if (!isValid()) {
-                //throw PCMError.InvalidHeader("Invalid WAV header format")
-            }
-        } catch (e: IndexOutOfBoundsException) {
-            throw PCMError.InvalidHeader("Error parsing WAV header: ${e.message}")
-        }
-    }
-
-    /**
-     * Factory constructor that creates a new WAV header with the given parameters.
-     *
-     * @param channels Number of channels (1 for mono, 2 for stereo)
-     * @param sampleRate Sample rate in Hz (e.g., 44100, 48000)
-     * @param bitsPerSample Bits per sample (8, 16, 24, or 32)
-     * @param dataSize Size of audio data in bytes
-     * @return A new WavHeader instance with the specified parameters
-     */
+ * Represents a WAV audio file header.
+ * Can both parse existing WAV headers and generate new ones.
+ */
+class WavHeader : PCMHeader {
     companion object {
         const val RIFF_IDENTIFIER = "RIFF"
         const val WAVE_FORMAT = "WAVE"
         const val FORMAT_IDENTIFIER = "fmt "
         const val DATA_IDENTIFIER = "data"
         const val PCM_FORMAT_CODE = 1
-        const val MINIMUM_HEADER_SIZE = 44
+        const val MINIMUM_HEADER_SIZE = 44  // Standard 44-byte WAV header
 
+        /**
+         * Factory method that creates a new WAV header with the given parameters.
+         *
+         * @param channels Number of channels (1 for mono, 2 for stereo)
+         * @param sampleRate Sample rate in Hz (e.g., 44100, 48000)
+         * @param bitsPerSample Bits per sample (8, 16, 24, or 32)
+         * @param dataSize Size of audio data in bytes
+         * @return A new WavHeader instance with the specified parameters
+         */
         fun create(channels: Int, sampleRate: Int, bitsPerSample: Int, dataSize: Int): WavHeader {
             // Validate parameters
             if (channels <= 0) {
@@ -100,7 +45,7 @@ class WavHeader// Parse the header
             // Calculate derived values
             val blockAlign = channels * (bitsPerSample / 8)
             val byteRate = sampleRate * blockAlign
-            val headerSize = 44
+            val headerSize = MINIMUM_HEADER_SIZE
             val totalSize = headerSize + dataSize
 
             // Create a new byte array for the header
@@ -126,20 +71,73 @@ class WavHeader// Parse the header
         }
     }
 
-    private fun readShortLE(offset: Int): Int {
-        if (offset < 0 || offset + 2 > rawBytes.size) {
-            throw IndexOutOfBoundsException("Cannot read short at offset $offset (buffer size: ${rawBytes.size})")
+    // Raw bytes of the header
+    private val rawBytes: ByteArray
+
+    // Standard WAV header fields with descriptive names
+    private val riffChunkId: String
+    private val chunkSize: Int
+    private val waveFormat: String
+    private val formatChunkId: String
+    private val formatChunkSize: Int
+    private val formatCode: Int
+    private val channelCount: Int
+    private val sampleRate: Int
+    private val byteRate: Int
+    private val blockAlign: Int
+    private val bitsPerSample: Int
+    private val dataChunkId: String
+    private val dataSize: Int
+
+    /**
+     * Constructor that validates the provided byte array as a WAV header.
+     *
+     * @param byteArray The raw byte array to parse as a WAV header
+     * @throws PCMError.InvalidHeader if the byte array does not contain a valid WAV header
+     */
+    constructor(byteArray: ByteArray) {
+        if (byteArray.size < MINIMUM_HEADER_SIZE) {
+            throw PCMError.InvalidHeader("WAV header is too small: ${byteArray.size} bytes (minimum $MINIMUM_HEADER_SIZE bytes required)")
         }
-        return ByteBuffer.wrap(rawBytes, offset, 2)
+
+        try {
+            rawBytes = byteArray.copyOf()
+
+            // Parse the header
+            riffChunkId = String(byteArray, 0, 4)
+            chunkSize = readIntLE(byteArray, 4)
+            waveFormat = String(byteArray, 8, 4)
+            formatChunkId = String(byteArray, 12, 4)
+            formatChunkSize = readIntLE(byteArray, 16)
+            formatCode = readShortLE(byteArray, 20)
+            channelCount = readShortLE(byteArray, 22)
+            sampleRate = readIntLE(byteArray, 24)
+            byteRate = readIntLE(byteArray, 28)
+            blockAlign = readShortLE(byteArray, 32)
+            bitsPerSample = readShortLE(byteArray, 34)
+            dataChunkId = String(byteArray, 36, 4)
+            dataSize = readIntLE(byteArray, 40)
+
+
+        } catch (e: IndexOutOfBoundsException) {
+            throw PCMError.InvalidHeader("Error parsing WAV header: ${e.message}")
+        }
+    }
+
+    private fun readShortLE(bytes: ByteArray, offset: Int): Int {
+        if (offset < 0 || offset + 2 > bytes.size) {
+            throw IndexOutOfBoundsException("Cannot read short at offset $offset (buffer size: ${bytes.size})")
+        }
+        return ByteBuffer.wrap(bytes, offset, 2)
             .order(ByteOrder.LITTLE_ENDIAN)
             .short.toInt() and 0xFFFF
     }
 
-    private fun readIntLE(offset: Int): Int {
-        if (offset < 0 || offset + 4 > rawBytes.size) {
-            throw IndexOutOfBoundsException("Cannot read int at offset $offset (buffer size: ${rawBytes.size})")
+    private fun readIntLE(bytes: ByteArray, offset: Int): Int {
+        if (offset < 0 || offset + 4 > bytes.size) {
+            throw IndexOutOfBoundsException("Cannot read int at offset $offset (buffer size: ${bytes.size})")
         }
-        return ByteBuffer.wrap(rawBytes, offset, 4)
+        return ByteBuffer.wrap(bytes, offset, 4)
             .order(ByteOrder.LITTLE_ENDIAN)
             .int
     }
@@ -156,18 +154,7 @@ class WavHeader// Parse the header
 
     override fun getSampleCount(): Int = dataSize / (bitsPerSample / 8) / channelCount
 
-    /**
-     * Checks if this is a valid WAV header by verifying:
-     * 1. RIFF chunk identifier
-     * 2. WAVE format identifier
-     * 3. Format chunk identifier
-     * 4. Data chunk identifier
-     * 5. PCM audio format
-     * 6. Consistent byte rate calculation
-     * 7. Consistent block alignment calculation
-     *
-     * @return true if the header is valid, false otherwise
-     */
+
     fun isValid(): Boolean {
         // Verify standard WAV format identifiers
         val isCorrectFormat = riffChunkId == RIFF_IDENTIFIER &&
@@ -201,21 +188,27 @@ class WavHeader// Parse the header
         return byteRate == expectedByteRate && blockAlign == expectedBlockAlign
     }
 
-    /**
-     * Gets the raw header bytes.
-     *
-     * @return The raw header byte array
-     */
     fun getHeaderBytes(): ByteArray {
         return rawBytes.copyOf(MINIMUM_HEADER_SIZE)
     }
 
-    /**
-     * Gets the complete byte array passed to the constructor.
-     *
-     * @return The complete raw byte array
-     */
-    fun getRawBytes(): ByteArray {
-        return rawBytes
+
+    override fun toString(): String {
+        return """WAV Header:
+            |  RIFF ID: $riffChunkId
+            |  Chunk Size: $chunkSize bytes
+            |  Format: $waveFormat
+            |  Format Chunk ID: $formatChunkId
+            |  Format Chunk Size: $formatChunkSize bytes
+            |  Format Code: $formatCode
+            |  Channels: $channelCount
+            |  Sample Rate: $sampleRate Hz
+            |  Byte Rate: $byteRate bytes/sec
+            |  Block Align: $blockAlign bytes
+            |  Bits Per Sample: $bitsPerSample bits
+            |  Data Chunk ID: $dataChunkId
+            |  Data Size: $dataSize bytes
+            |  Valid: ${isValid()}
+        """.trimMargin()
     }
 }

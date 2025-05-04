@@ -3,10 +3,10 @@ package com.example.waveviewer.audio_stream.wav_stereo
 import android.util.Log
 import android.util.Range
 import com.example.waveviewer.audio_stream.pcm.PCMError
-import com.example.waveviewer.audio_stream.pcm.mono.MonoPCMFrame
+import com.example.waveviewer.audio_stream.pcm.bit_stream.mono.MonoPCMFrame
 import com.example.waveviewer.audio_stream.pcm.PCMHeader
-import com.example.waveviewer.audio_stream.pcm.stereo.StereoPCMFrame
-import com.example.waveviewer.audio_stream.pcm.stereo.StereoPCMStream
+import com.example.waveviewer.audio_stream.pcm.bit_stream.stereo.StereoPCMFrame
+import com.example.waveviewer.audio_stream.pcm.bit_stream.stereo.StereoPCMStream
 import com.example.waveviewer.audio_stream.wav.WavHeader
 import com.example.waveviewer.audio_stream.wav_mono.MonoWavFrame
 import java.io.File

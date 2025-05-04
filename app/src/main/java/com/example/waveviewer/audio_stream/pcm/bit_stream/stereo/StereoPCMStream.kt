@@ -1,7 +1,7 @@
-package com.example.waveviewer.audio_stream.pcm.stereo
+package com.example.waveviewer.audio_stream.pcm.bit_stream.stereo
 
 import android.util.Range
-import com.example.waveviewer.audio_stream.pcm.mono.MonoPCMFrame
+import com.example.waveviewer.audio_stream.pcm.bit_stream.mono.MonoPCMFrame
 import com.example.waveviewer.audio_stream.pcm.PCMHeader
 
 interface StereoPCMStream {

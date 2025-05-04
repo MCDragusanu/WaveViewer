@@ -18,10 +18,10 @@ import androidx.compose.ui.unit.sp
 fun WaveForm(
     modifier: Modifier = Modifier,
     padding: PaddingValues = PaddingValues(0.dp),
+    bitDepth: Int,
     frameData: List<Pair<Array<Double>, String>>,
     trackColor: Color = Color.Cyan.copy(alpha = 0.1f),    // Light background color for track
     waveColor: Color = Color.Cyan.copy(alpha = 0.5f), // Default waveform bar color
-    dividerColor : Color = Color.LightGray.copy(0.2f),
     labelColor : Color = Color.DarkGray
 ) {
     BoxWithConstraints(
@@ -50,7 +50,7 @@ fun WaveForm(
                     BarList(
                         modifier = Modifier.fillMaxSize(),
                         bars = bars,
-                        bitDepth = 16,
+                        bitDepth = bitDepth,
                         frameWidth = frameWidth,
                         waveColor = waveColor
                     )

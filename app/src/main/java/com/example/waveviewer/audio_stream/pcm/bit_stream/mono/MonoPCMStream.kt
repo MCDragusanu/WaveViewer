@@ -1,4 +1,4 @@
-package com.example.waveviewer.audio_stream.pcm.mono
+package com.example.waveviewer.audio_stream.pcm.bit_stream.mono
 
 import android.util.Range
 import com.example.waveviewer.audio_stream.pcm.PCMHeader
@@ -17,9 +17,6 @@ abstract class  MonoPCMStream{
         action(this)
         close()
     }
-
-
-
     abstract fun isOpen() : Boolean
 
     abstract fun setProgress(progress: Float)

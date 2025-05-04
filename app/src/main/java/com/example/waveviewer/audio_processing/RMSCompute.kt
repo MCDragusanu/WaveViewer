@@ -1,6 +1,6 @@
 package com.example.waveviewer.audio_processing
 
-import com.example.waveviewer.audio_stream.pcm.mono.MonoPCMFrame
+import com.example.waveviewer.audio_stream.pcm.bit_stream.mono.MonoPCMFrame
 import kotlin.math.sqrt
 
 class RMSCompute {

@@ -1,4 +1,4 @@
-package com.example.waveviewer.audio_stream.pcm.mono
+package com.example.waveviewer.audio_stream.pcm.bit_stream.mono
 
 import com.example.waveviewer.audio_stream.pcm.PCMSample
 
