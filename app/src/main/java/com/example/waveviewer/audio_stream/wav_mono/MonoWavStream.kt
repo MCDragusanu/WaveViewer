@@ -59,6 +59,7 @@ class MonoWavStream(private val file: File,
 
     override fun setProgress(progress: Float) {
         try {
+
             // Ensure progress is within valid range
             val clampedProgress = progress.coerceIn(0f, 1f)
 

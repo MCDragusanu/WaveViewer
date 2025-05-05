@@ -3,12 +3,9 @@ package com.example.waveviewer.view.screens.home
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import java.io.File
 import java.util.UUID
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.Base64.Default.UrlSafe
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.roundToInt
 
@@ -19,6 +16,7 @@ class HomeViewModel : ViewModel() {
 
     private val _assetFileHeaders = MutableStateFlow(emptyList<FileHeader>())
     val assetFileHeader = _assetFileHeaders.asStateFlow()
+
 
 
     private val assetFiles = listOf(
@@ -46,6 +44,7 @@ class HomeViewModel : ViewModel() {
         _assetFileHeaders.update { assetHeaders }
     }
 
+
     private fun loadRecentFiles() : List<File>{
      return emptyList()
     }
@@ -65,9 +64,7 @@ class HomeViewModel : ViewModel() {
             fileName = fileHandle.name,
             mbSizeSt = formatSize(mbSize),
             label = label,
-            encodedPath = UrlSafe.encode(
-                fileHandle.path.encodeToByteArray(),
-            ),
+            fileUri = fileHandle.toURI().toString(),
             durationSt = formatDuration(minuteCount, secondCount)
         )
     }

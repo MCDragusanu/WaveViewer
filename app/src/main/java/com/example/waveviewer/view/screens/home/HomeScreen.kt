@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -20,7 +19,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -30,12 +28,13 @@ import androidx.compose.ui.unit.dp
 import com.example.waveviewer.R
 import kotlinx.serialization.Serializable
 import java.io.File
+import java.net.URI
 import kotlin.random.Random
 
 @Serializable
 data class FileHeader(
     val uid: Int,
-    val encodedPath: String,
+    val fileUri: String,
     val label: String,
     val fileName: String,
     val mbSizeSt: String,
@@ -70,7 +69,7 @@ fun HomeScreen(
         rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { result ->
             result?.let {
                 fileUri = it
-                onOpenFile(fileUri.encodedPath?:"Not Found")
+                onOpenFile(fileUri.toString())
             }
         }
     Scaffold(
@@ -109,7 +108,7 @@ fun HomeScreen(
                     .weight(1f)
                     .padding(horizontal = 16.dp),
                 fileHeaders = assetFiles,
-                onClick = { header -> onOpenFile(header.encodedPath) }
+                onClick = { header -> onOpenFile(header.fileUri) }
             )
         }
     }

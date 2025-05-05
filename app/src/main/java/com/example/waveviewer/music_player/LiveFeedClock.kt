@@ -41,6 +41,7 @@ interface LiveFeedClock {
 
      enum class ClockState{
           Default,
+          Ready,
           Playing,
           Paused,
           Stopped,
