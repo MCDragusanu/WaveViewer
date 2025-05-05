@@ -20,77 +20,35 @@ import com.example.waveviewer.audio_stream.wav_stereo.StereoWavStream
 import com.example.waveviewer.music_player.MediaPlayerAdapter
 import com.example.waveviewer.music_player.MediaPlayerListener
 import com.example.waveviewer.ui.theme.WaveViewerTheme
+import com.example.waveviewer.view.navigation.MainNavGraph.Main
 
 import com.example.waveviewer.view.waveform.UniversalWaveViewer
 import java.io.File
 import java.lang.Exception
 
-class MainActivity : ComponentActivity() , MediaPlayerListener {
+class MainActivity : ComponentActivity()  {
 
-    lateinit var mediaPlayerAdapter: MediaPlayerAdapter
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        mediaPlayerAdapter = MediaPlayerAdapter(this, this)
-        val file = getFileFromAssetFd(this, "stereo.wav")
-        val wavStream = PCMStreamFactory.getInstance().provideBitStream(file)
 
-        mediaPlayerAdapter.setAudioFile(file.path)
+
         setContent {
             WaveViewerTheme {
 
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-
-                    Column(
-                        modifier = Modifier.fillMaxWidth().wrapContentHeight(),
-                        verticalArrangement = Arrangement.spacedBy(
-                            8.dp,
-                            Alignment.CenterVertically
-                        ),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        UniversalWaveViewer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight(),
-                            songDurationInMs = mediaPlayerAdapter.getLengthInMs().toInt(),
-                            visibleFrameCount =10,
-                            totalFrames = 100,
-                            stream = wavStream
-                        )
-                    }
+                Main(){ file->
+                    this.getFileFromAssetFd(this , file)
                 }
             }
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        mediaPlayerAdapter.pause()
-    }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        mediaPlayerAdapter.stop()
-    }
-
-    override fun onRestart() {
-        super.onRestart()
-        mediaPlayerAdapter = MediaPlayerAdapter(this, this)
-        val file = getFileFromAssetFd(this, "music_mono_44100Hz_16bit.wav")
-        mediaPlayerAdapter.setAudioFile(file.path)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if(::mediaPlayerAdapter.isInitialized){
-
-        }
-    }
     private fun getFileFromAssetFd(context: Context, assetName: String): File {
         val afd = context.assets.openFd(assetName)
-        val file = File.createTempFile("temp_", "_$assetName", context.cacheDir)
+        val file = File.createTempFile("sample_", assetName, context.cacheDir)
 
         afd.createInputStream().use { input ->
             file.outputStream().use { output ->
@@ -100,36 +58,6 @@ class MainActivity : ComponentActivity() , MediaPlayerListener {
         return file
     }
 
-    override fun onDataStreamAssigned() {
 
-    }
-
-    override fun onPaused() {
-
-    }
-
-    override fun onStarted() {
-
-    }
-
-    override fun onError(exception: Exception) {
-        exception.printStackTrace()
-    }
-
-    override fun onPlaybackEnded() {
-
-    }
-
-    override fun onSeekCompleted() {
-
-    }
-
-    override fun onPrepared() {
-
-    }
-
-    override fun onStopped() {
-
-    }
 
 }

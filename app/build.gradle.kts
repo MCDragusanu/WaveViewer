@@ -2,6 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
+    id("org.jetbrains.kotlin.plugin.serialization")
+    id("kotlinx-serialization")
 }
 
 android {
@@ -40,6 +43,23 @@ android {
 }
 
 dependencies {
+    //Use for Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+
+    //  Lifecycle Dependencies
+    implementation ("androidx.lifecycle:lifecycle-runtime-compose-android:2.8.7")
+    implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
+
+    // Jetpack Compose
+    implementation ("androidx.compose.material3:material3-android:1.3.1")
+    implementation ("androidx.compose.runtime:runtime-android:1.7.7")
+    implementation ("androidx.compose.foundation:foundation-layout:1.7.7")
+    implementation("androidx.compose.ui:ui:1.4.3")
+    implementation("androidx.compose.material:material:1.8.0-alpha04")
+    implementation("androidx.navigation:navigation-compose:2.6.0")
+    implementation("androidx.compose.material:material:1.8.0-alpha04")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

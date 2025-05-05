@@ -66,10 +66,16 @@ class StereoWavStream(private val file : File) : StereoPCMStream {
             val leftBuffer = ByteArray(actualSamples * bitDepthBytes)
             val rightBuffer = ByteArray(actualSamples * bitDepthBytes)
 
+
             for (i in 0 until actualSamples) {
-                val baseIndex = i * bytesPerStereoSample
-                interleavedBuffer.copyInto(leftBuffer, i * bitDepthBytes, baseIndex, baseIndex + bitDepthBytes)
-                interleavedBuffer.copyInto(rightBuffer, i * bitDepthBytes, baseIndex + bitDepthBytes, baseIndex + bytesPerStereoSample)
+                val interleavedIndex = i * bytesPerStereoSample
+                val monoIndex = i * bitDepthBytes
+
+                // Copy left channel sample
+                interleavedBuffer.copyInto(leftBuffer, monoIndex, interleavedIndex, interleavedIndex + bitDepthBytes)
+
+                // Copy right channel sample
+                interleavedBuffer.copyInto(rightBuffer, monoIndex, interleavedIndex + bitDepthBytes, interleavedIndex + bytesPerStereoSample)
             }
 
             byteOffset += actualSamples * bytesPerStereoSample
